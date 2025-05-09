@@ -1,0 +1,97 @@
+name: Build Module
+
+on:
+  workflow_dispatch:
+    inputs:
+      major:
+        type: number
+        description: 'Major version increment by? (e.g. 1)'
+        default: 0
+        required: true
+      minor:
+        type: number
+        description: 'Minor version increment by? (e.g. 1)'
+        default: 1
+        required: true
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read current module.prop
+        id: read_version
+        run: |
+          cd ./module
+          VERSION=$(grep '^version=' module.prop | cut -d'=' -f2)
+          VERSION_CODE=$(grep '^versionCode=' module.prop | cut -d'=' -f2)
+          
+          MAJOR="${{ github.event.inputs.major }}"
+          MINOR="${{ github.event.inputs.minor }}"
+          
+          IFS='.' read -r CURRENT_MAJOR CURRENT_MINOR <<< "$VERSION"
+          NEW_VERSION="$((CURRENT_MAJOR + MAJOR)).$((CURRENT_MINOR + MINOR))"
+          NEW_VERSIONCODE=$((VERSION_CODE + 1))
+          
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_ENV"
+          echo "new_versioncode=$NEW_VERSIONCODE" >> "$GITHUB_ENV"
+
+      - name: Update module.prop
+        run: |
+          cd ./module
+          sed -i "s/^version=.*/version=${{ env.new_version }}/" module.prop
+          sed -i "s/^versionCode=.*/versionCode=${{ env.new_versioncode }}/" module.prop
+          
+          # Update the updateJson URL inside module.prop
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          sed -i "s|^updateJson=.*|updateJson=https://raw.githubusercontent.com/${{ github.repository }}/${BRANCH_NAME}/update.json|g" module.prop
+          
+          cat module.prop
+
+      - name: Commit updated module.prop
+        run: |
+          cd ./module
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add module.prop
+          git commit -m "Bump version to ${{ env.new_version }} (${{ env.new_versioncode }})"
+          git push origin HEAD:${{ github.ref_name }}
+          
+          cd ..
+          git tag v${{ env.new_version }}
+          git push origin v${{ env.new_version }}
+
+      - name: Create module zip
+        run: |
+          cd ./module
+          MODULE_NAME="TCP_Optimiser-${{ env.new_version }}-${{ env.new_versioncode }}"
+          zip -r "../$MODULE_NAME.zip" . -x "*.git*" -x ".github/*" -x "*.yml" -x "README.md"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: module-zip
+          path: "*.zip"
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.new_version }}
+          release_name: ${{ env.new_version }}
+          draft: true
+          prerelease: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./TCP_Optimiser-${{ env.new_version }}-${{ env.new_versioncode }}.zip
+          asset_name: TCP_Optimiser-${{ env.new_version }}-${{ env.new_versioncode }}.zip
+          asset_content_type: application/zip
