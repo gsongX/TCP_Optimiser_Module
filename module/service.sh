@@ -50,7 +50,7 @@ update_description() {
     esac
     
     local desc="TCP Optimisations & update tcp_cong_algo based on interface | iface: $iface $icon | algo: $algo"
-    run_as_root "sed -i \"s/^description=.*/description=$desc/\" \"$MODPATH/module.prop\""
+    run_as_root "sed -i '0,/^description=.*/s//description='"$desc"'/' \"$MODPATH/module.prop\""
 }
 
 kill_tcp_connections() {
