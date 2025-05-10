@@ -1,1 +1,1 @@
-1. Fix Status update in description bug.
+1. Fix Wrong icon in status issue.
