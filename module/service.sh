@@ -14,7 +14,8 @@ fi
 
 # On startup, reset description to default
 if [ -f "$MODPATH/module.prop" ]; then
-    sed -i 's|^description=.*|description=TCP Optimisations & update tcp_cong_algo based on interface|' "$MODPATH/module.prop"
+    default_desc="TCP Optimisations & update tcp_cong_algo based on interface"
+    sed -i '/^description=/d' "$MODPATH/module.prop" && echo "description=$default_desc" >> "$MODPATH/module.prop"
 fi
 
 log_print() {
