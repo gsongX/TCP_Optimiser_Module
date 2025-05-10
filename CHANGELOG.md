@@ -1,1 +1,1 @@
-1. Fix Wrong icon in status issue.
+1. Add Speedtest feature.
