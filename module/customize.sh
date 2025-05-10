@@ -1,15 +1,15 @@
 #!/system/bin/sh
 
-ui_print "- Starting module customization..."
+ui_print " [+] Starting module customization..."
 
 # Detect congestion algorithm
-ui_print "- Checking TCP congestion algorithm..."
+ui_print " [+] Checking TCP congestion algorithm..."
 if grep -qw bbr /proc/sys/net/ipv4/tcp_available_congestion_control; then
     CONG="bbr"
-    ui_print "- Found BBR!"
+    ui_print " [+] Found BBR!"
 else
     CONG="cubic"
-    ui_print "- BBR not found. Going with Cubic!"
+    ui_print " [+] BBR not found. Going with Cubic!"
 fi
 
 MODULE_NAME=$(basename "$MODPATH")
@@ -38,15 +38,25 @@ create_file_if_needed() {
     local target="$MODPATH/${prefix}_${suffix}"
 
     if check_exists_anywhere "$prefix"; then
-        ui_print "- Skipping $target: another ${prefix}_* file exists."
+        # If file exists and KSU is true, copy any file from MODULEPATH with the same prefix
+        if [ "$KSU" = true ]; then
+            # Find any file starting with ${prefix}_ in MODULEPATH and copy it to MODPATH
+            source_file=$(find "$MODULE_PATH" -name "${prefix}_*" -print -quit)
+            if [ -n "$source_file" ]; then
+                cp "$source_file" "$target"
+                ui_print " [+] Copied from MODULE_PATH to MODPATH: $target"
+            fi
+        else
+            ui_print " [-] Skipping $target: file already exists."
+        fi
         return
     fi
 
     if [ ! -f "$target" ]; then
         touch "$target"
-        ui_print "- Created: $target"
+        ui_print " [+] Created: $target"
     else
-        ui_print "- Skipped: $target already exists"
+        ui_print " [-] Skipped: $target already exists"
     fi
 }
 
@@ -59,6 +69,3 @@ fi
 
 # Always create rmnet_data_cubic unless another exists
 create_file_if_needed "rmnet_data" "cubic"
-
-chmod +x $MODPATH/bin/speedtest
-chmod +x $MODPATH/action.sh
