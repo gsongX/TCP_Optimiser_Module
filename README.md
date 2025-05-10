@@ -10,8 +10,10 @@ In certain kernel, TCP Congestion Algorithm BBR might be enabled. Or you want to
 3. Reboot device.
 
 ## Note:
-1. Default algorithm is **cubic** for **cellular**.
-2. Default algorithm is **brr** if exists for **WiFi**. Else **cubic**.
-3. You can change algorithm by just renaming the file in same format. Eg: If you want to change WiFi TCP congestion algorithm to **reno**, rename `wlan_{algo}` file to `wlan_reno`.
-4. There is an option to kill current tcp connections during algorithm change. This might stop downloads, uploads or other ongoing connections. So apps affected might need to be restarted. To enable create a file named `kill_connections` in module folder. This is disabled by default.
-5. Algorithm is applied only if present in kernel.
+1. `{algo}` in filename can be any TCP congestion algorithm (cubic, bbr, reno etc..). 
+2. Default algorithm is **cubic** for **cellular**.
+3. Default algorithm is **bbr** if exists for **WiFi**. Else **cubic**.
+4. You can change algorithm by just renaming the file in same format. Eg: If you want to change WiFi TCP congestion algorithm to **reno**, rename `wlan_{algo}` file to `wlan_reno`.
+5. There is an option to kill current tcp connections during algorithm change. This might stop downloads, uploads or other ongoing connections. So apps affected might need to be restarted. To enable create a file named `kill_connections` in module folder. This is disabled by default.
+6. Algorithm is applied only if present in kernel.
+7. Module logs are present in `/data/adb/modules/tcp_optimiser/service.log`.
