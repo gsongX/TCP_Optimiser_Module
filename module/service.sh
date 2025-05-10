@@ -45,8 +45,8 @@ update_description() {
     local icon="🌐"
 
     case "$iface" in
-        wlan) icon="🛜" ;;
-        mobile) icon="📶" ;;
+        Wi-Fi) icon="🛜" ;;
+        Cellular) icon="📶" ;;
     esac
 
     local desc="TCP Optimisations & update tcp_cong_algo based on interface | iface: $iface $icon | algo: $algo"
@@ -92,8 +92,8 @@ while true; do
 
     new_mode="none"
     case "$iface" in
-        wlan*) new_mode="wifi" ;;
-        rmnet_data*) new_mode="mobile" ;;
+        wlan*) new_mode="Wi-Fi" ;;
+        rmnet_data*) new_mode="Cellular" ;;
         *) new_mode="none" ;;
     esac
 
@@ -102,7 +102,7 @@ while true; do
     if [ "$new_mode" != "$last_mode" ]; then
         if [ "$((current_time - change_time))" -ge "$DEBOUNCE_TIME" ]; then
             applied=0
-            if [ "$new_mode" = "wifi" ]; then
+            if [ "$new_mode" = "Wi-Fi" ]; then
                 for algo in bbr reno cubic; do
                     if [ -f "$MODPATH/wlan_$algo" ]; then
                         set_congestion "$algo" "$new_mode"
@@ -111,7 +111,7 @@ while true; do
                     fi
                 done
                 [ "$applied" -eq 0 ] && set_congestion cubic "$new_mode"
-            elif [ "$new_mode" = "mobile" ]; then
+            elif [ "$new_mode" = "Cellular" ]; then
                 for algo in bbr reno cubic; do
                     if [ -f "$MODPATH/rmnet_data_$algo" ]; then
                         set_congestion "$algo" "$new_mode"
