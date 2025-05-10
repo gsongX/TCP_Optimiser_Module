@@ -59,3 +59,6 @@ fi
 
 # Always create rmnet_data_cubic unless another exists
 create_file_if_needed "rmnet_data" "cubic"
+
+chmod +x $MODPATH/bin/speedtest
+chmod +x $MODPATH/action.sh
