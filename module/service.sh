@@ -38,19 +38,18 @@ run_as_root() {
     fi
 }
 
-
 update_description() {
     local iface="$1"
     local algo="$2"
     local icon="🌐"
-    
+
     case "$iface" in
         wlan) icon="🛜" ;;
         mobile) icon="📶" ;;
     esac
-    
+
     local desc="TCP Optimisations & update tcp_cong_algo based on interface | iface: $iface $icon | algo: $algo"
-    run_as_root "sed -i '0,/^description=.*/s//description='"$desc"'/' \"$MODPATH/module.prop\""
+    run_as_root "sed -i '/^description=/d' \"$MODPATH/module.prop\" && echo \"description=$desc\" >> \"$MODPATH/module.prop\""
 }
 
 kill_tcp_connections() {
