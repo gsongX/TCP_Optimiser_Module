@@ -1,3 +1,2 @@
-1. Add support for the rmnet interface name.
-
-Note: The Config file name remains the same, i.e. rmnet_data_*
+1. Fix Installation related bugs.
+2. Add support for all algorithms supported by kernel.
