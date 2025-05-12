@@ -6,6 +6,9 @@ FLAGFILE="/dev/.tcp_module_log_cleared"
 MAX_LOG_LINES=200
 DEBOUNCE_TIME=10
 
+# Get the list of available congestion control algorithms
+congestion_algorithms=$(cat /proc/sys/net/ipv4/tcp_available_congestion_control)
+
 # Clear log on first run after boot
 if [ ! -f "$FLAGFILE" ]; then
     rm -f "$LOGFILE" >/dev/null 2>&1
@@ -103,7 +106,7 @@ while true; do
         if [ "$((current_time - change_time))" -ge "$DEBOUNCE_TIME" ]; then
             applied=0
             if [ "$new_mode" = "Wi-Fi" ]; then
-                for algo in bbr reno cubic; do
+                for algo in $congestion_algorithms; do
                     if [ -f "$MODPATH/wlan_$algo" ]; then
                         set_congestion "$algo" "$new_mode"
                         applied=1
@@ -112,7 +115,7 @@ while true; do
                 done
                 [ "$applied" -eq 0 ] && set_congestion cubic "$new_mode"
             elif [ "$new_mode" = "Cellular" ]; then
-                for algo in bbr reno cubic; do
+                for algo in $congestion_algorithms; do
                     if [ -f "$MODPATH/rmnet_data_$algo" ]; then
                         set_congestion "$algo" "$new_mode"
                         applied=1

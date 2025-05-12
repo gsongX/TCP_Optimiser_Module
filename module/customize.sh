@@ -43,8 +43,10 @@ create_file_if_needed() {
             # Find any file starting with ${prefix}_ in MODULEPATH and copy it to MODPATH
             source_file=$(find "$MODULE_PATH" -name "${prefix}_*" -print -quit)
             if [ -n "$source_file" ]; then
-                cp "$source_file" "$target"
-                ui_print " [+] Copied from MODULE_PATH to MODPATH: $target"
+                cp "$source_file" "$MODPATH/"
+                
+                file_name=$(basename "$source_file")
+                ui_print " [+] Copied from $MODULE_PATH to $MODPATH: $file_name"
             fi
         else
             ui_print " [-] Skipping $target: file already exists."
@@ -69,3 +71,17 @@ fi
 
 # Always create rmnet_data_cubic unless another exists
 create_file_if_needed "rmnet_data" "cubic"
+
+if check_exists_anywhere "kill"; then
+    # If file exists and KSU is true, copy any file from MODULEPATH with the same prefix
+    if [ "$KSU" = true ]; then
+        # Find any file starting with ${prefix}_ in MODULEPATH and copy it to MODPATH
+        source_file=$(find "$MODULE_PATH" -name "kill_connections" -print -quit)
+        if [ -n "$source_file" ]; then
+            cp "$source_file" "$MODPATH/"
+            ui_print " [+] Copied from $MODULE_PATH to $MODPATH: kill_connections"
+        fi
+    else
+        ui_print " [-] Skipping $MODPATH/kill_connections: file already exists."
+    fi
+fi
