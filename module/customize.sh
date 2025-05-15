@@ -85,3 +85,17 @@ if check_exists_anywhere "kill"; then
         ui_print " [-] Skipping $MODPATH/kill_connections: file already exists."
     fi
 fi
+
+if check_exists_anywhere "initcwnd"; then
+    # If file exists and KSU is true, copy any file from MODULEPATH with the same prefix
+    if [ "$KSU" = true ]; then
+        # Find any file starting with ${prefix}_ in MODULEPATH and copy it to MODPATH
+        source_file=$(find "$MODULE_PATH" -name "initcwnd_initrwnd" -print -quit)
+        if [ -n "$source_file" ]; then
+            cp "$source_file" "$MODPATH/"
+            ui_print " [+] Copied from $MODULE_PATH to $MODPATH: initcwnd_initrwnd"
+        fi
+    else
+        ui_print " [-] Skipping $MODPATH/initcwnd_initrwnd: file already exists."
+    fi
+fi

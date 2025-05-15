@@ -1,0 +1,126 @@
+:root {
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --primary: #bb86fc;
+  --text: #e1e1e1;
+  --text-secondary: #a0a0a0;
+  --border-radius: 12px;
+  --spacing: 16px;
+  --footer-height: 60px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text);
+  padding: var(--spacing);
+  min-height: 100vh;
+  padding-bottom: calc(var(--footer-height) + var(--spacing));
+  position: relative;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  display: grid;
+  gap: var(--spacing);
+}
+
+.card {
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  padding: var(--spacing);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  margin-bottom: 16px;
+}
+
+.card-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.footer-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--footer-height);
+  background-color: var(--card-bg);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--text-secondary);
+  height: 100%;
+  transition: color 0.3s;
+}
+
+.nav-item.active {
+  color: var(--primary);
+}
+
+.nav-icon {
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+
+.nav-text {
+  font-size: 0.8rem;
+}
+
+.module-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0;
+}
+
+.module-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.version {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.link {
+  color: var(--primary);
+  text-decoration: none;
+  padding: 2px 0;
+  font-size: 0.8rem;
+}
+
+.page {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s ease;
+}
+
+.page.active {
+  opacity: 1;
+  transform: translateY(0);
+}

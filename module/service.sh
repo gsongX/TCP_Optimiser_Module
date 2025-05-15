@@ -1,19 +1,12 @@
 #!/system/bin/sh
 
 MODPATH="${0%/*}"
-LOGFILE="$MODPATH/service.log"
-FLAGFILE="/dev/.tcp_module_log_cleared"
-MAX_LOG_LINES=200
 DEBOUNCE_TIME=10
+
+. $MODPATH/utils.sh # Load utils
 
 # Get the list of available congestion control algorithms
 congestion_algorithms=$(cat /proc/sys/net/ipv4/tcp_available_congestion_control)
-
-# Clear log on first run after boot
-if [ ! -f "$FLAGFILE" ]; then
-    rm -f "$LOGFILE" >/dev/null 2>&1
-    touch "$FLAGFILE" >/dev/null 2>&1
-fi
 
 # On startup, reset description to default
 if [ -f "$MODPATH/module.prop" ]; then
@@ -21,31 +14,10 @@ if [ -f "$MODPATH/module.prop" ]; then
     sed -i '/^description=/d' "$MODPATH/module.prop" && echo "description=$default_desc" >> "$MODPATH/module.prop"
 fi
 
-log_print() {
-    local timestamp
-    timestamp=$(date +'%Y-%m-%d %H:%M:%S')
-    echo "$timestamp - $1" >> "$LOGFILE"
-
-    line_count=$(wc -l < "$LOGFILE" 2>/dev/null | awk '{print $1}')
-    if [ "$line_count" -gt "$MAX_LOG_LINES" ]; then
-        tail -n "$((MAX_LOG_LINES / 2))" "$LOGFILE" > "${LOGFILE}.tmp"
-        mv "${LOGFILE}.tmp" "$LOGFILE"
-    fi
-}
-
-# Run commands as root using su -c
-run_as_root() {
-    if [ "$(id -u)" -eq 0 ]; then
-        sh -c "$1"
-    else
-        su -c "$1"
-    fi
-}
-
 update_description() {
     local iface="$1"
     local algo="$2"
-    local icon="🌐"
+    local icon="⁉️"
 
     case "$iface" in
         Wi-Fi) icon="🛜" ;;
@@ -53,26 +25,48 @@ update_description() {
     esac
 
     local desc="TCP Optimisations & update tcp_cong_algo based on interface | iface: $iface $icon | algo: $algo"
-    run_as_root "sed -i '/^description=/d' \"$MODPATH/module.prop\" && echo \"description=$desc\" >> \"$MODPATH/module.prop\""
+    sed -i '/^description=/d' "$MODPATH/module.prop" && echo "description=$desc" >> "$MODPATH/module.prop"
 }
 
 kill_tcp_connections() {
     if [ -f "$MODPATH/kill_connections" ]; then
         log_print "Killing all TCP connections (IPv4 and IPv6) due to congestion change"
         
-        # Kill all IPv4 connections (destination 0.0.0.0/0)
-        run_as_root "ss -K dst 0.0.0.0/0"  # Kill all IPv4 connections
-        
-        # Kill all IPv6 connections (destination ::/0)
-        run_as_root "ss -K dst ::/0"  # Kill all IPv6 connections
+        # Kill all connections
+        ss -K
+    fi
+}
+
+set_max_initcwnd_initrwnd() {
+    local active_iface="$1"
+    if [ -f "$MODPATH/initcwnd_initrwnd" ]; then
+        maxBufferSize=$(cat /proc/sys/net/ipv4/tcp_rmem | awk '{print $3}')
+        mtu=$(ip link show "$active_iface" | awk '/mtu/ {print $NF}')
+        mtu=$((mtu - 40))
+        maxInitrwndValue=$((maxBufferSize / mtu))
+        local applied
+        applied=0
+
+        while IFS= read -r line; do
+            run_as_su "/system/bin/ip route change $line initcwnd 10 initrwnd $maxInitrwndValue"
+            if [ $? -eq 0 ]; then
+                 applied=1
+            fi
+        done <<EOF
+$(run_as_su "/system/bin/ip route show | grep \"dev $active_iface\"")
+EOF
+
+        if [ "$applied" -eq 1 ]; then
+            log_print "Setting initcwnd = 10; initrwnd = $maxInitrwndValue!"
+        fi
     fi
 }
 
 set_congestion() {
     local algo="$1"
     local mode="$2"
-    if grep -qw "$algo" /proc/sys/net/ipv4/tcp_available_congestion_control; then
-        run_as_root "echo \"$algo\" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null"
+    if echo "$congestion_algorithms" | grep -qw "$algo"; then
+        echo "$algo" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
         log_print "Applied congestion control: $algo ($mode)"
         kill_tcp_connections
         update_description "$mode" "$algo"
@@ -80,7 +74,6 @@ set_congestion() {
         log_print "Unavailable algorithm: $algo"
     fi
 }
-
 
 get_active_iface() {
     iface=$(ip route get 192.0.2.1 2>/dev/null | awk '/dev/ {for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}')
@@ -102,30 +95,33 @@ while true; do
 
     current_time=$(date +%s)
 
-    if [ "$new_mode" != "$last_mode" ]; then
+    if [ "$new_mode" != "$last_mode" ] || [ -f "$MODPATH/force_apply" ]; then
         if [ "$((current_time - change_time))" -ge "$DEBOUNCE_TIME" ]; then
             applied=0
             if [ "$new_mode" = "Wi-Fi" ]; then
                 for algo in $congestion_algorithms; do
                     if [ -f "$MODPATH/wlan_$algo" ]; then
                         set_congestion "$algo" "$new_mode"
+                        set_max_initcwnd_initrwnd "$iface"
                         applied=1
                         break
                     fi
                 done
-                [ "$applied" -eq 0 ] && set_congestion cubic "$new_mode"
+                [ "$applied" -eq 0 ] && set_congestion cubic "$new_mode" && set_max_initcwnd_initrwnd "$iface"
             elif [ "$new_mode" = "Cellular" ]; then
                 for algo in $congestion_algorithms; do
                     if [ -f "$MODPATH/rmnet_data_$algo" ]; then
                         set_congestion "$algo" "$new_mode"
+                        set_max_initcwnd_initrwnd "$iface"
                         applied=1
                         break
                     fi
                 done
-                [ "$applied" -eq 0 ] && set_congestion cubic "$new_mode"
+                [ "$applied" -eq 0 ] && set_congestion cubic "$new_mode" && set_max_initcwnd_initrwnd "$iface"
             fi
             last_mode="$new_mode"
             change_time="$current_time"
+			rm -f "$MODPATH/force_apply"
         fi
     fi
 

@@ -32,7 +32,13 @@ jobs:
           MINOR="${{ github.event.inputs.minor }}"
           
           IFS='.' read -r CURRENT_MAJOR CURRENT_MINOR <<< "$VERSION"
-          NEW_VERSION="$((CURRENT_MAJOR + MAJOR)).$((CURRENT_MINOR + MINOR))"
+          NEW_MAJOR=$((CURRENT_MAJOR + MAJOR))
+          if [ "$MAJOR" -gt 0 ]; then
+              NEW_MINOR="$MINOR"
+          else
+              NEW_MINOR=$((CURRENT_MINOR + MINOR))
+          fi
+          NEW_VERSION="$NEW_MAJOR.$NEW_MINOR"
           NEW_VERSIONCODE=$((VERSION_CODE + 1))
           
           echo "new_version=$NEW_VERSION" >> "$GITHUB_ENV"
