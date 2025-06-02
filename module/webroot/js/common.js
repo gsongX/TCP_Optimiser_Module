@@ -52,6 +52,30 @@ export async function getInitcwndInitrwndValue () {
 	}
 };
 
+export async function get_wifi_calling_state() {
+  const DUMPSYS_TMP_FILE = `${router_state.moduleInformation.moduleDir}/dumpsys.tmp`;
+
+  try {
+    // Run dumpsys and save to file
+    await exec(`dumpsys activity service SystemUIService > "${DUMPSYS_TMP_FILE}" 2>/dev/null`);
+
+    // Check for VoWiFi pattern
+     const { stdout: returnCode } = await exec(`
+      grep -qE "slot=\'vowifi\'.*visibleState=ICON" "${DUMPSYS_TMP_FILE}" && echo $?`
+    );
+
+    // Clean up temp file
+    await exec(`rm -f "${DUMPSYS_TMP_FILE}"`);
+
+    // Return true if match found (exit code 0)
+    return returnCode.trim() === '0';
+  } catch (error) {
+    console.error('Error checking VoWiFi state:', error);
+	addLog('Error checking VoWiFi state.');
+    return false;
+  }
+}
+
 export async function fetchIsConfigFile (file_name) {
 	try {
 		const { stdout: output } = await exec(`[ -f "${router_state.moduleInformation.moduleDir}/${file_name}" ] && echo "exist" || echo ""`);

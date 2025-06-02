@@ -11,7 +11,8 @@ const router_state = {
 		active_iface_type: "None",
 		active_iface: "Unknown ⁉️",
 		active_algorithm: "Unknown",
-		active_InitcwndInitrwndValue: []
+		active_InitcwndInitrwndValue: [],
+		wifi_calling_state: false,
 	},
 	settingsPageParams: {
 		wlanAlgo: null,

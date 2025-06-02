@@ -4,6 +4,7 @@ MODPATH="${0%/*}"
 LOGFILE="$MODPATH/service.log"
 FLAGFILE="/dev/.tcp_module_log_cleared"
 MAX_LOG_LINES=200
+DUMPSYS_TMP_FILE="$MODPATH/dumpsys.tmp"
 
 # Clear log on first run after boot
 if [ ! -f "$FLAGFILE" ]; then
@@ -29,4 +30,15 @@ run_as_su() {
     su -c "$cmd"
     local status=$?
     return $status
+}
+
+get_wifi_calling_state() {
+    dumpsys activity service SystemUIService > "$DUMPSYS_TMP_FILE" 2>/dev/null
+    grep -qE "slot='vowifi'.*visibleState=ICON.*visible" "$DUMPSYS_TMP_FILE"
+    rm -f "$DUMPSYS_TMP_FILE"
+    if [ $? -eq 0 ]; then
+        return 0
+    else
+        return 1
+    fi
 }
