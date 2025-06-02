@@ -12,7 +12,7 @@ export async function updateModuleStatus () {
 	{
 		active_iface = await get_active_iface();
 		active_iface = active_iface ? active_iface : "None";
-		active_iface_type = active_iface.startsWith("rmnet") ? "Cellular 📶" : active_iface.startsWith("wlan") ? "Wi-Fi 🛜" : "Unknown ⁉️";
+		active_iface_type = active_iface.startsWith("rmnet") || active_iface.startsWith("ccmni") ? "Cellular 📶" : active_iface.startsWith("wlan") ? "Wi-Fi 🛜" : "Unknown ⁉️";
 		active_algorithm = await get_active_algorithm();
 		active_InitcwndInitrwndValue = await getInitcwndInitrwndValue();
 	} catch (error) {

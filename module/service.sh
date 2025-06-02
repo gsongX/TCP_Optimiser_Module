@@ -114,6 +114,7 @@ while true; do
     case "$iface" in
         wlan*) new_mode="Wi-Fi" ;;
         rmnet*) new_mode="Cellular" ;;
+        ccmni*) new_mode="Cellular" ;;
         *) new_mode="none" ;;
     esac
 
