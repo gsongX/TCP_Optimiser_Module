@@ -152,5 +152,31 @@ export async function initSettings() {
 		}
 	});
 	
+	
+	document.querySelectorAll('.collapsible-header').forEach(header => {
+	  const content = header.nextElementSibling;
+	  const arrow = header.querySelector('.arrow');
+
+	  // Set initial state
+	  content.classList.add('collapsed');
+	  // header.classList.add('active'); // Optional: open first by default
+
+	  header.addEventListener('click', () => {
+		const isCollapsed = content.classList.contains('collapsed');
+		
+		// Toggle collapsed state
+		if (isCollapsed) {
+		  content.style.maxHeight = content.scrollHeight + "px";
+		  header.classList.add('active');
+		} else {
+		  content.style.maxHeight = "0";
+		  header.classList.remove('active');
+		}
+
+		content.classList.toggle('collapsed');
+		arrow.classList.toggle('rotated');
+	  });
+	});
+	
 	router_state.isInitializing = false;
 }

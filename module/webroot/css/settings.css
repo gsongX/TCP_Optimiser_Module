@@ -107,3 +107,41 @@ input:checked + .slider:before {
 .apply-btn:hover {
   opacity: 0.9;
 }
+
+.collapsible-group {
+  margin-bottom: 16px;
+}
+
+.collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px 0;
+  border-bottom: 1px solid #3d3d3d;
+}
+
+.collapsible-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.collapsible-header .arrow {
+  transition: transform 0.3s ease;
+}
+
+.collapsible-header.active .arrow {
+  transform: rotate(180deg);
+}
+
+.collapsible-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  max-height: 200px; /* Adjust based on expected content height */
+  margin: 12px 0;
+}
+
+.collapsible-content.collapsed {
+  max-height: 0;
+}
