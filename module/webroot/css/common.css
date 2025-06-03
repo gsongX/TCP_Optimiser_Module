@@ -19,10 +19,11 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background-color: var(--bg-color);
   color: var(--text);
-  padding: var(--spacing);
   min-height: 100vh;
-  padding-bottom: calc(var(--footer-height) + var(--spacing));
   position: relative;
+  padding: var(--spacing);
+  padding-top: var(--window-inset-top);
+  padding-bottom: var(--window-inset-bottom);
 }
 
 .container {
