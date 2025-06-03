@@ -9,12 +9,6 @@ VOWIFI_CONNECT_TIME=10
 # Get the list of available congestion control algorithms
 congestion_algorithms=$(cat /proc/sys/net/ipv4/tcp_available_congestion_control)
 
-# On startup, reset description to default
-if [ -f "$MODPATH/module.prop" ]; then
-	default_desc="TCP Optimisations & update tcp_cong_algo based on interface"
-	sed -i '/^description=/d' "$MODPATH/module.prop" && echo "description=$default_desc" >> "$MODPATH/module.prop"
-fi
-
 update_description() {
 	local iface="$1"
 	local algo="$2"
@@ -129,6 +123,11 @@ apply_cellular_settings() {
 
 # Start Run Code
 
+# On startup, reset description to default
+if [ -f "$MODPATH/module.prop" ]; then
+	default_desc="TCP Optimisations & update tcp_cong_algo based on interface"
+	sed -i '/^description=/d' "$MODPATH/module.prop" && echo "description=$default_desc" >> "$MODPATH/module.prop"
+fi
 
 # IPv4 TCP optimizations
 echo 1 > /proc/sys/net/ipv4/tcp_ecn 2>/dev/null
