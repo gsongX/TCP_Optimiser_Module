@@ -80,14 +80,41 @@ set_congestion() {
 	fi
 }
 
+set_tcp_pacing() {
+	local ca="$1"
+	local ss="$2"
+	echo "$ca" > /proc/sys/net/ipv4/tcp_pacing_ca_ratio 2>/dev/null
+	echo "$ss" > /proc/sys/net/ipv4/tcp_pacing_ss_ratio 2>/dev/null
+}
+
 get_active_iface() {
 	iface=$(ip route get 192.0.2.1 2>/dev/null | awk '/dev/ {for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}')
 	echo "$iface"
 }
 
+get_wifi_freq() {
+	local iface="$1"
+	iw dev "$iface" link 2>/dev/null | grep "freq:" | awk '{print $2}'
+}
+
 apply_wifi_settings() {
 	local iface="$1"
 	local applied=0
+	freq=$(get_wifi_freq "$iface")
+	log_print "Wi-Fi band detected: ${freq} MHz"
+	if [ -n "$freq" ]; then
+		if [ "$freq" -lt 3000 ]; then
+			# 2.4 GHz
+			set_tcp_pacing 150 200
+		elif [ "$freq" -lt 6000 ]; then
+			# 5 GHz or higher
+			set_tcp_pacing 200 300
+		else
+			# 6 GHz or higher
+			set_tcp_pacing 250 350
+		fi
+	fi
+	
 	for algo in $congestion_algorithms; do
 		if [ -f "$MODPATH/wlan_$algo" ]; then
 			set_congestion "$algo" "Wi-Fi"
@@ -106,6 +133,9 @@ apply_wifi_settings() {
 apply_cellular_settings() {
 	local iface="$1"
 	local applied=0
+	
+	set_tcp_pacing 120 200
+	
 	for algo in $congestion_algorithms; do
 		if [ -f "$MODPATH/rmnet_data_$algo" ]; then
 			set_congestion "$algo" "Cellular"
