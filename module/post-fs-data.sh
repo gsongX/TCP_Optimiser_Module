@@ -4,16 +4,16 @@ sleep 2
 
 # Check if BBR is available
 if grep -qw bbr /proc/sys/net/ipv4/tcp_available_congestion_control; then
-    CONG=bbr
+	CONG=bbr
 else
-    CONG=cubic
+	CONG=cubic
 fi
 
 # Set congestion control
 if command -v sysctl >/dev/null 2>&1; then
-    sysctl -w net.ipv4.tcp_congestion_control=$CONG
+	sysctl -w net.ipv4.tcp_congestion_control=$CONG
 else
-    echo "$CONG" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
+	echo "$CONG" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
 fi
 
 # IPv4 TCP optimizations
