@@ -1,16 +1,20 @@
 <div class="card system-info">
 	<div class="card-header">
-	<h3>Module Status</h3>
+	<h3>Status</h3>
 	</div>
 	<div class="info-row">
+		<span class="label">Module Status</span>
+		<span id="module_status_value" class="value">Loading Module Status...</span>
+	</div>
+	<div id="active_iface_type_div" class="info-row hidden">
 		<span class="label">Interface Type</span>
 		<span id="active_iface_type_value" class="value">Loading Active interface type...</span>
 	</div>
-	<div class="info-row">
+	<div id="active_iface_div" class="info-row hidden">
 		<span class="label">Interface Name</span>
 		<span id="active_iface_value" class="value">Loading Active interface...</span>
 	</div>
-	<div class="info-row">
+	<div id="tcp_cong_div" class="info-row hidden">
 		<span class="label">TCP Congestion Algorithm</span>
 		<span id="tcp_cong_value" class="value">Loading Active Algorithm...</span>
 	</div>

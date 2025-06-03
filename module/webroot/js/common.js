@@ -15,6 +15,16 @@ export function updateModuleInformation () {
 	}
 }
 
+export async function getModuleActiveState () {
+	try {
+		const { stdout: file_exists } = await exec(`ls "/dev/.tcp_module_log_cleared"`);
+		return file_exists != "" ? true: false;
+	}catch (error) {
+		console.error('Error updating module state:', error);
+		toast("Error fetching module state.");
+	}
+}
+
 export async function get_active_iface () {
 	try {
 		const { stdout: active_iface } = await exec(`ip route get 192.0.2.1 2>/dev/null | awk '/dev/ {for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}'`);

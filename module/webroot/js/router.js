@@ -8,6 +8,7 @@ const router_state = {
 	moduleInformation: null,
 	isInitializing: true,
 	homePageParams: {
+		module_status: "Loading Module Status...⌛",
 		active_iface_type: "None",
 		active_iface: "Unknown ⁉️",
 		active_algorithm: "Unknown",
