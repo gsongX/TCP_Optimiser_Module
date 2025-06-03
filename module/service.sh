@@ -116,7 +116,7 @@ apply_cellular_settings() {
 
 # IPv4 TCP optimizations
 echo 1 > /proc/sys/net/ipv4/tcp_ecn 2>/dev/null
-echo pfifo_fast > /proc/sys/net/core/default_qdisc 2>/dev/null
+echo "pfifo_fast" > /proc/sys/net/core/default_qdisc 2>/dev/null
 echo 150 > /proc/sys/net/ipv4/tcp_pacing_ca_ratio 2>/dev/null
 echo 200 > /proc/sys/net/ipv4/tcp_pacing_ss_ratio 2>/dev/null
 echo 1 > /proc/sys/net/ipv4/tcp_window_scaling 2>/dev/null
