@@ -63,6 +63,16 @@ EOF
     fi
 }
 
+set_qdisc() {
+	local iface="$1"
+	local qdisc="$2"
+	if run_as_su "tc qdisc replace dev $iface root $qdisc"; then
+		log_print "Applied qdisc: $qdisc ($iface)"
+	else
+		log_print "Failed to apply qdisc: $qdisc ($iface)"
+	fi
+}
+
 set_congestion() {
     local algo="$1"
     local mode="$2"
@@ -87,6 +97,9 @@ apply_wifi_settings() {
     for algo in $congestion_algorithms; do
         if [ -f "$MODPATH/wlan_$algo" ]; then
             set_congestion "$algo" "Wi-Fi"
+			if [ "$algo" = "bbr" ]; then
+				set_qdisc "$iface" "fq_codel"
+			fi
             set_max_initcwnd_initrwnd "$iface"
             applied=1
             break
@@ -102,6 +115,9 @@ apply_cellular_settings() {
     for algo in $congestion_algorithms; do
         if [ -f "$MODPATH/rmnet_data_$algo" ]; then
             set_congestion "$algo" "Cellular"
+			if [ "$algo" = "bbr" ]; then
+				set_qdisc "$iface" "fq_codel"
+			fi
             set_max_initcwnd_initrwnd "$iface"
             applied=1
             break
