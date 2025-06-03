@@ -2,6 +2,7 @@
 
 MODPATH="${0%/*}"
 DEBOUNCE_TIME=10
+VOWIFI_CONNECT_TIME=10
 
 . $MODPATH/utils.sh # Load utils
 
@@ -80,6 +81,35 @@ get_active_iface() {
     echo "$iface"
 }
 
+apply_wifi_settings() {
+    local iface="$1"
+    local applied=0
+    for algo in $congestion_algorithms; do
+        if [ -f "$MODPATH/wlan_$algo" ]; then
+            set_congestion "$algo" "Wi-Fi"
+            set_max_initcwnd_initrwnd "$iface"
+            applied=1
+            break
+        fi
+    done
+    [ "$applied" -eq 0 ] && set_congestion cubic "Wi-Fi" && set_max_initcwnd_initrwnd "$iface"
+	return $applied
+}
+
+apply_cellular_settings() {
+    local iface="$1"
+    local applied=0
+    for algo in $congestion_algorithms; do
+        if [ -f "$MODPATH/rmnet_data_$algo" ]; then
+            set_congestion "$algo" "Cellular"
+            set_max_initcwnd_initrwnd "$iface"
+            applied=1
+            break
+        fi
+    done
+    [ "$applied" -eq 0 ] && set_congestion cubic "Cellular" && set_max_initcwnd_initrwnd "$iface"
+	return $applied
+}
 
 # Start Run Code
 
@@ -106,47 +136,50 @@ echo "4096 65536 16777216" > /proc/sys/net/ipv6/tcp_wmem 2>/dev/null
 
 last_mode=""
 change_time=0
+vowifi_pending=0
+vowifi_start_time=0
 
 while true; do
+	current_time=$(date +%s)
     iface=$(get_active_iface)
+	[ -z "$iface" ] && sleep 5 && continue
 
     new_mode="none"
     case "$iface" in
         wlan*) new_mode="Wi-Fi" ;;
-        rmnet*) new_mode="Cellular" ;;
-        ccmni*) new_mode="Cellular" ;;
+        rmnet*|ccmni*) new_mode="Cellular" ;;
         *) new_mode="none" ;;
     esac
-
-    current_time=$(date +%s)
 
     if [ "$new_mode" != "$last_mode" ] || [ -f "$MODPATH/force_apply" ]; then
         if [ "$((current_time - change_time))" -ge "$DEBOUNCE_TIME" ]; then
             applied=0
             if [ "$new_mode" = "Wi-Fi" ]; then
-                for algo in $congestion_algorithms; do
-                    if [ -f "$MODPATH/wlan_$algo" ]; then
-                        set_congestion "$algo" "$new_mode"
-                        set_max_initcwnd_initrwnd "$iface"
-                        applied=1
-                        break
-                    fi
-                done
-                [ "$applied" -eq 0 ] && set_congestion cubic "$new_mode" && set_max_initcwnd_initrwnd "$iface"
+				# Start waiting for VoWiFi
+                vowifi_pending=1
+                vowifi_start_time="$current_time"
             elif [ "$new_mode" = "Cellular" ]; then
-                for algo in $congestion_algorithms; do
-                    if [ -f "$MODPATH/rmnet_data_$algo" ]; then
-                        set_congestion "$algo" "$new_mode"
-                        set_max_initcwnd_initrwnd "$iface"
-                        applied=1
-                        break
-                    fi
-                done
-                [ "$applied" -eq 0 ] && set_congestion cubic "$new_mode" && set_max_initcwnd_initrwnd "$iface"
+				vowifi_pending=0
+                apply_cellular_settings "$iface"
             fi
-            last_mode="$new_mode"
-            change_time="$current_time"
+			last_mode="$new_mode"
+			change_time="$current_time"
 			rm -f "$MODPATH/force_apply"
+        fi
+    fi
+	
+	# === Wi-Fi Pending Logic ===
+    if [ "$new_mode" = "Wi-Fi" ] && [ "$vowifi_pending" -eq 1 ]; then
+		vowifi=$(get_wifi_calling_state)
+		vowifi=${vowifi:-1}
+        if [ "$((current_time - vowifi_start_time))" -ge "$VOWIFI_CONNECT_TIME" ]; then
+            log_print "[INFO] VoWiFi timeout reached. Applying Wi-Fi settings..."
+            vowifi_pending=0
+            apply_wifi_settings "$iface"
+        elif [ "$vowifi" -eq 0 ]; then
+            log_print "[INFO] VoWiFi activated. Applying Wi-Fi settings..."
+            vowifi_pending=0
+            apply_wifi_settings "$iface"
         fi
     fi
 
