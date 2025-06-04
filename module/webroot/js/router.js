@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 					setCSS(pageName);
 					
 					if (!router_state.moduleInformation) {
-						updateModuleInformation();
+						updateModuleInformation().then(res => {});
 					}
 					
 					// Load page-specific script

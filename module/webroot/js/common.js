@@ -2,17 +2,40 @@ import { exec, toast, moduleInfo } from './kernelsu.js';
 import router_state from './router.js';
 import { addLog } from './logs.js';
 
-export function updateModuleInformation () {
+async function readModuleProp () {
+	try {
+		const { stdout: details } = await exec(`cat /data/adb/modules/tcp_optimiser/module.prop`);
+		const lines = details.trim().split('\n').filter(line => line);
+		
+		// Convert lines to object
+		let moduleInfo = lines.reduce((acc, line) => {
+		  const [key, ...rest] = line.split('=');
+		  const value = rest.join('=').trim(); // handle values with '=' in them
+		  acc[key.trim()] = value;
+		  return acc;
+		}, {});
+		
+		moduleInfo["moduleDir"] = `/data/adb/modules/${moduleInfo.id}`;
+		return moduleInfo;
+	} catch (error) {
+		
+	}
+}
+
+export async function updateModuleInformation () {
 	try {
 		router_state.moduleInformation = JSON.parse(moduleInfo());
-		var versionStr = router_state.moduleInformation.version ? 'v' + router_state.moduleInformation.version : '';
-		var versionCodeStr = router_state.moduleInformation.versionCode ? router_state.moduleInformation.versionCode : '';
-		var finalVersionStr = versionStr != '' && versionCodeStr != '' ? `${versionStr} (${versionCodeStr})` : "module.prop might be corrupted!"
-		document.getElementById('version').textContent = finalVersionStr;
+		if(router_state.moduleInformation != {}) {
+			router_state.moduleInformation = await readModuleProp();
+		}
 	}catch (error) {
 		console.error('Error updating module info:', error);
 		toast("Error fetching module info.");
 	}
+	var versionStr = router_state.moduleInformation.version ? 'v' + router_state.moduleInformation.version : '';
+	var versionCodeStr = router_state.moduleInformation.versionCode ? router_state.moduleInformation.versionCode : '';
+	var finalVersionStr = versionStr != '' && versionCodeStr != '' ? `${versionStr} (${versionCodeStr})` : "module.prop might be corrupted!"
+	document.getElementById('version').textContent = finalVersionStr;
 }
 
 export async function getModuleActiveState () {
