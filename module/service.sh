@@ -20,7 +20,10 @@ update_description() {
 	esac
 
 	local desc="TCP Optimisations & update tcp_cong_algo based on interface | iface: $iface $icon | algo: $algo"
-	sed -i '/^description=/d' "$MODPATH/module.prop" && echo "description=$desc" >> "$MODPATH/module.prop"
+	# Remove old description
+	sed -i '/^description=/d' "$MODPATH/module.prop"
+	# Append new description with leading newline
+	printf '\ndescription=%s\n' "$desc" >> "$MODPATH/module.prop"
 }
 
 kill_tcp_connections() {
@@ -156,7 +159,10 @@ apply_cellular_settings() {
 # On startup, reset description to default
 if [ -f "$MODPATH/module.prop" ]; then
 	default_desc="TCP Optimisations & update tcp_cong_algo based on interface"
-	sed -i '/^description=/d' "$MODPATH/module.prop" && echo "description=$default_desc" >> "$MODPATH/module.prop"
+	# Remove existing description line (if any)
+	sed -i '/^description=/d' "$MODPATH/module.prop"
+	# Append new description with leading newline for safety
+	printf '\ndescription=%s\n' "$default_desc" >> "$MODPATH/module.prop"
 fi
 
 # IPv4 TCP optimizations
