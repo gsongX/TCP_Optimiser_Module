@@ -94,7 +94,7 @@ export async function get_wifi_calling_state() {
 
     // Check for VoWiFi pattern
      const { stdout: returnCode } = await exec(`
-      grep -qE "slot=\'vowifi\'.*visibleState=ICON" "${DUMPSYS_TMP_FILE}" && echo $?`
+      grep -qE "slot=\'vowifi\'.*visible user=.*" "${DUMPSYS_TMP_FILE}" && echo $?`
     );
 
     // Clean up temp file

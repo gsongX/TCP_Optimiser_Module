@@ -35,7 +35,7 @@ run_as_su() {
 get_wifi_calling_state() {
 	rm -f "$DUMPSYS_TMP_FILE"
 	dumpsys activity service SystemUIService > "$DUMPSYS_TMP_FILE" 2>/dev/null
-	grep -qEm 1 "slot='vowifi'.*visibleState=ICON.*" "$DUMPSYS_TMP_FILE"
+	grep -qEm 1 "slot='vowifi'.*visible user=.*" "$DUMPSYS_TMP_FILE"
 	local status=$?
 	rm -f "$DUMPSYS_TMP_FILE"
 	# echo's result: 0 = true (VoWiFi active), 1 = false
